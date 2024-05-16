@@ -73,7 +73,6 @@ class Renderer():
             device=self.device
         )
 
-        # lights = PointLights(device=self.device, location=[[0.0, 0.0, 0.0]])
         cameras = FoVPerspectiveCameras(
             device=self.device,
             R=R, 
