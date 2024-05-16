@@ -211,7 +211,7 @@ class Renderer():
                 grid_3d_i = self.translate_pts(grid_3d_i, trans_xyz)
 
             faces = get_face_idx(b, h, w).to(im.device)
-            textures = imgs.permute(0, 2, 3, 1).reshape(b, -1, 3)
+            textures = im.permute(0, 2, 3, 1).reshape(b, -1, 3)
 
             meshes = Meshes(verts=grid_3d_i, faces=faces)
             meshes.textures = TexturesVertex(verts_features=textures)
