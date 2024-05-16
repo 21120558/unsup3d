@@ -20,10 +20,15 @@ from pytorch3d.renderer import (
     MeshRasterizer,
     SoftPhongShader,
     TexturesUV,
-    TexturesVertex
+    TexturesVertex,
+    ShaderBase
 )
 
 EPS = 1e-7
+
+from pytorch3d.renderer import ShaderBase
+
+
 
 class Renderer():
     def __init__(self, cfgs):
@@ -60,7 +65,14 @@ class Renderer():
         self.K = K.unsqueeze(0)
 
         lights = PointLights(device=self.device, location=[[0.0, 0.0, 0.0]])
-        cameras = FoVPerspectiveCameras(device=self.device, R=R, T=t, fov=self.fov)
+        cameras = FoVPerspectiveCameras(
+            device=self.device,
+            R=R, 
+            T=t, 
+            fov=self.fov, 
+            zfar=self.renderer_max_depth, 
+            znear=self.renderer_min_depth
+        )
 
         self.rasterizer = MeshRasterizer(
             cameras=cameras,
@@ -150,6 +162,7 @@ class Renderer():
         # allow some margin out of valid range
         margin = (self.max_depth - self.min_depth) / 2
         warped_depth = warped_depth.clamp(min=self.min_depth-margin, max=self.max_depth+margin)
+
         return warped_depth.flip(1).flip(2)
 
     def get_normal_from_depth(self, depth):

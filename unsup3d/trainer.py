@@ -139,6 +139,8 @@ class Trainer():
             self.model.set_eval()
 
         for iter, input in enumerate(loader):
+            if iter == 200:
+                break
             m = self.model.forward(input)
             if is_train:
                 self.model.backward()
