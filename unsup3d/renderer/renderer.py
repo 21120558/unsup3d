@@ -166,9 +166,8 @@ class Renderer():
         normal = normal / (((normal**2).sum(3, keepdim=True))**0.5 + EPS)
         return normal
 
-
-    def render_yaw(self, imgs, depth, v_before=None, v_after=None, rotations=None, maxr=90, nsample=9, crop_mesh=None):
-        b, c, h, w = imgs.shape
+    def render_yaw(self, im, depth, v_before=None, v_after=None, rotations=None, maxr=90, nsample=9, crop_mesh=None):
+        b, c, h, w = im.shape
         grid_3d = self.depth_to_3d_grid(depth)
 
         if crop_mesh is not None:
@@ -186,21 +185,21 @@ class Renderer():
                 grid_3d[:,:,-right:,0] = grid_3d[:,:,-right-1:-right,0].repeat(1,1,right)
                 grid_3d[:,:,-right:,2] = grid_3d[:,:,-right-1:-right,2].repeat(1,1,right)
 
-        grid_3d = grid_3d.reshape(b, -1, 3)
+        grid_3d = grid_3d.reshape(b,-1,3)
         im_trans = []
 
         # inverse warp
         if v_before is not None:
             rot_mat, trans_xyz = get_transform_matrices(v_before)
             grid_3d = self.translate_pts(grid_3d, -trans_xyz)
-            grid_3d = self.rotate_pts(grid_3d, rot_mat.transpose(2, 1))
+            grid_3d = self.rotate_pts(grid_3d, rot_mat.transpose(2,1))
 
         if rotations is None:
-            rotations = torch.linspace(-math.pi / 180 * maxr, math.pi / 180 * maxr, nsample)
+            rotations = torch.linspace(-math.pi/180*maxr, math.pi/180*maxr, nsample)
         for i, ri in enumerate(rotations):
-            ri = torch.FloatTensor([0, ri, 0]).to(imgs.device).view(1, 3)
+            ri = torch.FloatTensor([0, ri, 0]).to(im.device).view(1,3)
             rot_mat_i, _ = get_transform_matrices(ri)
-            grid_3d_i = self.rotate_pts(grid_3d, rot_mat_i.repeat(b, 1, 1))
+            grid_3d_i = self.rotate_pts(grid_3d, rot_mat_i.repeat(b,1,1))
 
             if v_after is not None:
                 if len(v_after.shape) == 3:
@@ -211,7 +210,7 @@ class Renderer():
                 grid_3d_i = self.rotate_pts(grid_3d_i, rot_mat)
                 grid_3d_i = self.translate_pts(grid_3d_i, trans_xyz)
 
-            faces = get_face_idx(b, h, w).to(imgs.device)
+            faces = get_face_idx(b, h, w).to(im.device)
             textures = imgs.permute(0, 2, 3, 1).reshape(b, -1, 3)
 
             meshes = Meshes(verts=grid_3d_i, faces=faces)
@@ -220,36 +219,8 @@ class Renderer():
             warped_images = self.renderer(meshes).clamp(min=-1., max=1.)
             warped_images = warped_images[:, :, :, :3].permute(0, 3, 1, 2)
 
-
             ###############################################################
             # warped_images = self.renderer.render_rgb(grid_3d_i, faces, textures).clamp(min=-1., max=1.)
             ###############################################################
-            im_trans += [warped_images.flip(2)]
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            save_images(current_dir, warped_images, 'warped', str(i), sep_folder=True)
+            im_trans += [warped_images]
         return torch.stack(im_trans, 1)  # b x t x c x h x w
-
-
-import numpy as np
-import cv2
-import os 
-
-
-def mkdir(path):
-    """Create directory PATH recursively if it does not exist."""
-    os.makedirs(path, exist_ok=True)
-
-def save_images(out_fold, imgs, prefix='', suffix='', sep_folder=True, ext='.png'):
-    imgs = imgs.transpose(2,3,1)
-    if sep_folder:
-        out_fold = os.path.join(out_fold, suffix)
-    mkdir(out_fold)
-    prefix = prefix + '_' if prefix else ''
-    suffix = '_' + suffix if suffix else ''
-    offset = len(glob.glob(os.path.join(out_fold, prefix+'*'+suffix+ext))) +1
-    for i, img in enumerate(imgs):
-        if 'depth' in suffix:
-            im_out = np.uint16(img[...,::-1]*65535.)
-        else:
-            im_out = np.uint8(img[...,::-1]*255.)
-        cv2.imwrite(os.path.join(out_fold, prefix+'%05d'%(i+offset)+suffix+ext), im_out)
