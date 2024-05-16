@@ -1,28 +1,8 @@
 import torch
 import math
+import neural_renderer as nr
 from .utils import *
 
-from pytorch3d.utils import ico_sphere
-from pytorch3d.io import load_obj
-from pytorch3d.structures import Meshes
-from pytorch3d.ops import sample_points_from_meshes
-from pytorch3d.loss import chamfer_distance
-import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-from pytorch3d.renderer import (
-    look_at_view_transform,
-    FoVPerspectiveCameras,
-    PointLights,
-    DirectionalLights,
-    Materials,
-    RasterizationSettings,
-    MeshRenderer,
-    MeshRasterizer,
-    SoftPhongShader,
-    TexturesUV,
-    TexturesVertex,
-    DirectionalLights
-)
 
 EPS = 1e-7
 
@@ -33,7 +13,7 @@ class Renderer():
         self.image_size = cfgs.get('image_size', 64)
         self.min_depth = cfgs.get('min_depth', 0.9)
         self.max_depth = cfgs.get('max_depth', 1.1)
-        self.rot_center_depth = cfgs.get('rot_center_depth', (self.min_depth + self.max_depth) / 2)
+        self.rot_center_depth = cfgs.get('rot_center_depth', (self.min_depth+self.max_depth)/2)
         self.fov = cfgs.get('fov', 10)
         self.tex_cube_size = cfgs.get('tex_cube_size', 2)
         self.renderer_min_depth = cfgs.get('renderer_min_depth', 0.1)
@@ -45,61 +25,29 @@ class Renderer():
         #             (1)   (z)
 
         ## renderer for visualization
-        R = [[[1., 0., 0.],
-              [0., 1., 0.],
-              [0., 0., 1.]]]
+        R = [[[1.,0.,0.],
+              [0.,1.,0.],
+              [0.,0.,1.]]]
         R = torch.FloatTensor(R).to(self.device)
-        t = torch.zeros(1, 3, dtype=torch.float32).to(self.device)
-        fx = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
-        fy = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
-        cx = (self.image_size - 1) / 2
-        cy = (self.image_size - 1) / 2
+        t = torch.zeros(1,3, dtype=torch.float32).to(self.device)
+        fx = (self.image_size-1)/2/(math.tan(self.fov/2 *math.pi/180))
+        fy = (self.image_size-1)/2/(math.tan(self.fov/2 *math.pi/180))
+        cx = (self.image_size-1)/2
+        cy = (self.image_size-1)/2
         K = [[fx, 0., cx],
              [0., fy, cy],
              [0., 0., 1.]]
         K = torch.FloatTensor(K).to(self.device)
         self.inv_K = torch.inverse(K).unsqueeze(0)
         self.K = K.unsqueeze(0)
-
-        ambient_color = (1.0, 1.0, 1.0)  
-        diffuse_color = (0.0, 0.0, 0.0)  
-        specular_color = (0.0, 0.0, 0.0) 
-
-        directional_lights = DirectionalLights(
-            ambient_color=(ambient_color,),
-            diffuse_color=(diffuse_color,),
-            specular_color=(specular_color,),
-            direction=((0, 1, 0),),  
-            device=self.device
-        )
-
-        # lights = PointLights(device=self.device, location=[[0.0, 0.0, 0.0]])
-        cameras = FoVPerspectiveCameras(
-            device=self.device,
-            R=R, 
-            T=t, 
-            fov=self.fov, 
-            zfar=self.renderer_max_depth, 
-            znear=self.renderer_min_depth
-        )
-
-        self.rasterizer = MeshRasterizer(
-            cameras=cameras,
-            raster_settings=RasterizationSettings(
-                image_size=64,
-                blur_radius=0.0,
-                faces_per_pixel=1,
-            )
-        )
-
-        self.renderer = MeshRenderer(
-            rasterizer=self.rasterizer,
-            shader=SoftPhongShader(
-                device=self.device,
-                cameras=cameras,
-                lights=directional_lights
-            )
-        )
+        self.renderer = nr.Renderer(camera_mode='projection',
+                                    light_intensity_ambient=1.0,
+                                    light_intensity_directional=0.,
+                                    K=self.K, R=R, t=t,
+                                    near=self.renderer_min_depth, far=self.renderer_max_depth,
+                                    image_size=self.image_size, orig_size=self.image_size,
+                                    fill_back=True,
+                                    background_color=[1,1,1])
 
     def set_transform_matrices(self, view):
         self.rot_mat, self.trans_xyz = get_transform_matrices(view)
@@ -116,7 +64,7 @@ class Renderer():
 
     def depth_to_3d_grid(self, depth):
         b, h, w = depth.shape
-        grid_2d = get_grid(b, h, w, normalize=False).to(depth.device)  # N x h x w x 2
+        grid_2d = get_grid(b, h, w, normalize=False).to(depth.device)  # Nxhxwx2
         depth = depth.unsqueeze(-1)
         grid_3d = torch.cat((grid_2d, torch.ones_like(depth)), dim=3)
         grid_3d = grid_3d.matmul(self.inv_K.to(depth.device).transpose(2,1)) * depth
@@ -132,10 +80,10 @@ class Renderer():
 
     def get_warped_3d_grid(self, depth):
         b, h, w = depth.shape
-        grid_3d = self.depth_to_3d_grid(depth).reshape(b, -1, 3)
+        grid_3d = self.depth_to_3d_grid(depth).reshape(b,-1,3)
         grid_3d = self.rotate_pts(grid_3d, self.rot_mat)
         grid_3d = self.translate_pts(grid_3d, self.trans_xyz)
-        return grid_3d.reshape(b, h, w, 3) # return 3d vertices
+        return grid_3d.reshape(b,h,w,3) # return 3d vertices
 
     def get_inv_warped_3d_grid(self, depth):
         b, h, w = depth.shape
@@ -158,21 +106,14 @@ class Renderer():
 
     def warp_canon_depth(self, canon_depth):
         b, h, w = canon_depth.shape
-        grid_3d = self.get_warped_3d_grid(canon_depth).reshape(b, -1, 3) # b x (hxw) x 3
+        grid_3d = self.get_warped_3d_grid(canon_depth).reshape(b,-1,3)
         faces = get_face_idx(b, h, w).to(canon_depth.device)
-
-        meshes = Meshes(verts=grid_3d, faces=faces)
-        warped_depth = self.rasterizer(meshes).zbuf.squeeze(3)
-
-        ############################################################
-        # warped_depth = self.renderer.render_depth(grid_3d, faces)
-        ############################################################
+        warped_depth = self.renderer.render_depth(grid_3d, faces)
 
         # allow some margin out of valid range
-        margin = (self.max_depth - self.min_depth) / 2
+        margin = (self.max_depth - self.min_depth) /2
         warped_depth = warped_depth.clamp(min=self.min_depth-margin, max=self.max_depth+margin)
-
-        return warped_depth.flip(1).flip(2)
+        return warped_depth
 
     def get_normal_from_depth(self, depth):
         b, h, w = depth.shape
@@ -233,16 +174,7 @@ class Renderer():
                 grid_3d_i = self.translate_pts(grid_3d_i, trans_xyz)
 
             faces = get_face_idx(b, h, w).to(im.device)
-            textures = im.permute(0, 2, 3, 1).reshape(b, -1, 3)
-
-            meshes = Meshes(verts=grid_3d_i, faces=faces)
-            meshes.textures = TexturesVertex(verts_features=textures)
-
-            warped_images = self.renderer(meshes).clamp(min=-1., max=1.)
-            warped_images = warped_images[:, :, :, :3].permute(0, 3, 1, 2)
-
-            ###############################################################
-            # warped_images = self.renderer.render_rgb(grid_3d_i, faces, textures).clamp(min=-1., max=1.)
-            ###############################################################
+            textures = get_textures_from_im(im, tx_size=self.tex_cube_size)
+            warped_images = self.renderer.render_rgb(grid_3d_i, faces, textures).clamp(min=-1., max=1.)
             im_trans += [warped_images]
         return torch.stack(im_trans, 1)  # b x t x c x h x w

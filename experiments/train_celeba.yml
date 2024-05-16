@@ -5,7 +5,7 @@ num_epochs: 30
 batch_size: 64
 checkpoint_dir: results/celeba
 save_checkpoint_freq: 1
-keep_num_checkpoint: 2
+keep_num_checkpoint: 30
 resume: true
 use_logger: true
 log_freq: 500
