@@ -150,7 +150,7 @@ def plot_metrics(stats, pdf_path=None, fig=1, datasets=None, metrics=None):
         legend_content = []
         for d, dataset in enumerate(datasets):
             ls = linestyles[d % len(linestyles)]
-            if isinstance(stats[dataset][0][metric], collections.Iterable):
+            if isinstance(stats[dataset][0][metric], collections.abc.Iterable):
                 metric_dimension = len(stats[dataset][0][metric])
                 for sl in range(metric_dimension):
                     x = [stats[dataset][t][metric][sl] for t in range(duration)]
