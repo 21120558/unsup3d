@@ -21,13 +21,9 @@ from pytorch3d.renderer import (
     SoftPhongShader,
     TexturesUV,
     TexturesVertex,
-    ShaderBase
 )
 
 EPS = 1e-7
-
-from pytorch3d.renderer import ShaderBase
-
 
 
 class Renderer():
