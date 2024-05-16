@@ -36,7 +36,7 @@ class Renderer():
         self.fov = cfgs.get('fov', 10)
         self.tex_cube_size = cfgs.get('tex_cube_size', 2)
         self.renderer_min_depth = cfgs.get('renderer_min_depth', 0.1)
-        self.renderer_max_depth = cfgs.get('renderer_max_depth', 10.)
+        self.renderer_max_depth = cfgs.get('renderer_max_depth', 1.)
 
         #### camera intrinsics
         #             (u)   (x)
