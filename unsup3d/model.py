@@ -189,6 +189,12 @@ class Unsup3D():
         grid_2d_from_canon = self.renderer.get_inv_warped_2d_grid(self.recon_depth)
         self.recon_im = nn.functional.grid_sample(self.canon_im, grid_2d_from_canon, mode='bilinear')
 
+
+        # current_dir = os.path.dirname(os.path.realpath(__file__))
+        # fake = self.recon_depth.clone()
+        # fake = ((fake[:1] - self.min_depth)/(self.max_depth - self.min_depth)).clamp(0,1).detach().cpu().unsqueeze(1).numpy()
+        # utils.save_images(current_dir, fake, suffix='fake_depth', sep_folder=True)
+
         margin = (self.max_depth - self.min_depth) /2
         recon_im_mask = (self.recon_depth < self.max_depth+margin).float()  # invalid border pixels have been clamped at max_depth+margin
         recon_im_mask_both = recon_im_mask[:b] * recon_im_mask[b:]  # both original and flip reconstruction

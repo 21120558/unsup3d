@@ -21,7 +21,7 @@ from pytorch3d.renderer import (
     SoftPhongShader,
     TexturesUV,
     TexturesVertex,
-    DirectionalLights
+    DirectionalLights,
 )
 
 EPS = 1e-7
@@ -85,7 +85,7 @@ class Renderer():
         self.rasterizer = MeshRasterizer(
             cameras=cameras,
             raster_settings=RasterizationSettings(
-                image_size=64,
+                image_size=self.image_size,
                 blur_radius=0.0,
                 faces_per_pixel=1,
             )
@@ -170,6 +170,8 @@ class Renderer():
         # allow some margin out of valid range
         margin = (self.max_depth - self.min_depth) / 2
         warped_depth = warped_depth.clamp(min=self.min_depth-margin, max=self.max_depth+margin)
+        warped_depth[warped_depth == self.min_depth - margin] = self.max_depth
+
 
         return warped_depth.flip(1).flip(2)
 
