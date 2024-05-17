@@ -144,6 +144,22 @@ def save_images(out_fold, imgs, prefix='', suffix='', sep_folder=True, ext='.png
             im_out = np.uint8(img[...,::-1]*255.)
         cv2.imwrite(os.path.join(out_fold, prefix+'%05d'%(i+offset)+suffix+ext), im_out)
 
+def save_images_fake(out_fold, imgs, prefix='', suffix='', sep_folder=True, ext='.png'):
+    if sep_folder:
+        out_fold = os.path.join(out_fold, suffix)
+    xmkdir(out_fold)
+    prefix = prefix + '_' if prefix else ''
+    suffix = '_' + suffix if suffix else ''
+    offset = len(glob.glob(os.path.join(out_fold, prefix+'*'+suffix+ext))) +1
+
+    imgs = imgs.transpose(0,2,3,1)
+    for i, img in enumerate(imgs):
+        if 'depth' in suffix:
+            im_out = np.uint16(img[...,::-1]*65535.)
+        else:
+            im_out = np.uint8(img[...,::-1]*255.)
+        cv2.imwrite(os.path.join(out_fold, prefix+'haha'+suffix+ext), im_out)
+
 
 def save_txt(out_fold, data, prefix='', suffix='', sep_folder=True, ext='.txt'):
     if sep_folder:
