@@ -37,7 +37,7 @@ class Renderer():
         self.fov = cfgs.get('fov', 10)
         self.tex_cube_size = cfgs.get('tex_cube_size', 2)
         self.renderer_min_depth = cfgs.get('renderer_min_depth', 0.1)
-        self.renderer_max_depth = cfgs.get('renderer_max_depth', 10.)
+        self.renderer_max_depth = cfgs.get('renderer_max_depth', 0.5)
 
         #### camera intrinsics
         #             (u)   (x)
@@ -170,7 +170,6 @@ class Renderer():
         # allow some margin out of valid range
         margin = (self.max_depth - self.min_depth) / 2
         warped_depth = warped_depth.clamp(min=self.min_depth-margin, max=self.max_depth+margin)
-        warped_depth[warped_depth == self.min_depth - margin] = self.max_depth
 
 
         return warped_depth.flip(1).flip(2)
