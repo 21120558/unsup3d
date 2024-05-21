@@ -4,3 +4,4 @@ pretrained/*/
 results
 neural_renderer
 *.zip
+Makefile
