@@ -49,9 +49,9 @@ class Renderer():
         R = [[[1., 0., 0.],
               [0., 1., 0.],
               [0., 0., 1.]]]
-        R = torch.FloatTensor(R).to(self.device)
-        t = torch.zeros(1, 3, dtype=torch.float32).to(self.device)
-        # R, t = look_at_view_transform(dist=-0.00003, device=self.device)
+        # R = torch.FloatTensor(R).to(self.device)
+        # t = torch.zeros(1, 3, dtype=torch.float32).to(self.device)
+        R, t = look_at_view_transform(dist=-0.00003, elev=-5 device=self.device)
         fx = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
         fy = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
         cx = (self.image_size - 1) / 2
