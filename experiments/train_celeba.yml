@@ -29,5 +29,5 @@ lr: 0.0001
 
 ## renderer
 rot_center_depth: 1.0
-fov: 10 # in degrees
+fov: 15 # in degrees
 tex_cube_size: 2
