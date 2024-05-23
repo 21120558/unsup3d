@@ -55,7 +55,11 @@ class Renderer():
         #edge        
         # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.06, 0),), device=self.device)
         #chrome
-        R, t = look_at_view_transform(dist=-0.001, elev=3.5, at=((0, -0.06, 0),), device=self.device)
+        # R, t = look_at_view_transform(dist=-0.001, elev=3.5, at=((0, -0.06, 0),), device=self.device)
+
+        #chrome hidden
+        R, t = look_at_view_transform(dist=-0.003, elev=3.5, at=((0, -0.06, 0),), device=self.device)
+
         fx = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
         fy = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
         cx = (self.image_size - 1) / 2
