@@ -53,10 +53,10 @@ class Renderer():
         # t = torch.zeros(1, 3, dtype=torch.float32).to(self.device)
         # -0.043
         #edge        
-        R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0585, 0),), device=self.device)
+        # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0585, 0),), device=self.device)
 
         #chrome
-        # R, t = look_at_view_transform(dist=-0.002, elev=3, at=((0, -0.0590, 0),), device=self.device)
+        R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0590, 0),), device=self.device)
 
         #chrome hidden
         # R, t = look_at_view_transform(dist=-0.003, elev=3.5, at=((0, -0.06, 0),), device=self.device)
