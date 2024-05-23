@@ -56,10 +56,10 @@ class Renderer():
         # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0575, 0),), device=self.device)
 
         #chrome
-        R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0565, 0),), device=self.device)
+        # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0565, 0),), device=self.device)
 
         #chrome hidden
-        # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0570, 0),), device=self.device)
+        R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0560, 0),), device=self.device)
 
         fx = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
         fy = (self.image_size - 1) / 2 / (math.tan(self.fov / 2 * math.pi / 180))
