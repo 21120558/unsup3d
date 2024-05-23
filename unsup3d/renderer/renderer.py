@@ -56,7 +56,7 @@ class Renderer():
         R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0585, 0),), device=self.device)
 
         #chrome
-        # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0590, 0),), device=self.device)
+        R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.0580, 0),), device=self.device)
 
         #chrome hidden
         # R, t = look_at_view_transform(dist=-0.001, elev=3, at=((0, -0.058, 0),), device=self.device)
